@@ -42,12 +42,17 @@ export default {
       },
       animation: {
         float: 'float 2s ease-in-out infinite alternate',
+        'float-character': 'floatCharacter 3s ease-in-out infinite',
         'coin-spin': 'coinSpin 1.5s linear infinite',
         'sparkle-up': 'sparkleUp 10s linear infinite',
         'fade-in': 'fadeIn 300ms ease-out',
       },
       keyframes: {
         float: { '0%': { transform: 'translateY(0)' }, '100%': { transform: 'translateY(-2px)' } },
+        floatCharacter: {
+          '0%, 100%': { transform: 'translateY(-6px)' },
+          '50%': { transform: 'translateY(6px)' },
+        },
         coinSpin: { '0%': { transform: 'rotateY(0deg)' }, '100%': { transform: 'rotateY(360deg)' } },
         sparkleUp: {
           '0%': { transform: 'translateY(0)', opacity: '0' },
