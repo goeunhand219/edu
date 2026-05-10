@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>경제 마법사 학교 — 프로토타입</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"/>
+<style>
+  :root {
+    --bg-1: #0F0C29; --bg-2: #1E1B4B; --bg-3: #312E81;
+    --gold: #FBBF24; --cyan: #22D3EE; --magenta: #EC4899;
+    --ink: #FFFFFF; --ink-soft: #FEF3C7; --ink-dim: rgba(255,255,255,0.55);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, var(--bg-3) 0%, var(--bg-2) 40%, var(--bg-1) 100%);
+    color: var(--ink); min-height: 100vh;
+    background-attachment: fixed;
+  }
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(251,191,36,0.5), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(34,211,238,0.4), transparent),
+      radial-gradient(1px 1px at 85% 15%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 15% 70%, rgba(236,72,153,0.4), transparent);
+    background-size: 100% 100%; opacity: 0.7;
+  }
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px;
+  }
+  .crest {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(251,191,36,0.10);
+    border: 1px solid rgba(251,191,36,0.35);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+    color: var(--gold); text-transform: uppercase;
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 52px); font-weight: 900;
+    margin: 16px 0 8px; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #FFF 0%, #FEF3C7 50%, #FBBF24 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sub {
+    font-size: 16px; color: var(--ink-dim); max-width: 620px; line-height: 1.6;
+    margin: 0 0 24px;
+  }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+  .pill {
+    font-size: 11px; padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--ink-soft); font-weight: 600;
+  }
+
+  .start-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    padding: 20px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(236,72,153,0.18), rgba(76,29,149,0.4));
+    border: 1px solid rgba(251,191,36,0.4);
+    box-shadow: 0 12px 40px rgba(76,29,149,0.4);
+    margin-bottom: 48px;
+  }
+  .start-bar .info { flex: 1; min-width: 200px; }
+  .start-bar .title { font-size: 18px; font-weight: 800; }
+  .start-bar .desc { font-size: 13px; color: var(--ink-dim); margin-top: 2px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 22px; border-radius: 12px;
+    font-size: 15px; font-weight: 800; font-family: inherit;
+    cursor: pointer; border: none; text-decoration: none;
+    transition: transform .15s, box-shadow .2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #EC4899, #BE185D);
+    color: white;
+    box-shadow: 0 8px 24px rgba(236,72,153,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(236,72,153,0.55); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.06); color: white;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+  /* Flow diagram */
+  .section-h {
+    display: flex; align-items: baseline; gap: 12px; margin: 0 0 18px;
+  }
+  .section-h h2 {
+    font-size: 20px; font-weight: 800; margin: 0;
+  }
+  .section-h .num {
+    font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 0.15em;
+  }
+
+  .grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .card {
+    position: relative;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 18px; overflow: hidden;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(251,191,36,0.5);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(251,191,36,0.2);
+  }
+  .card .num-tag {
+    position: absolute; top: 12px; left: 12px; z-index: 2;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+    padding: 3px 8px; border-radius: 6px;
+    background: rgba(0,0,0,0.5); color: var(--gold);
+    border: 1px solid rgba(251,191,36,0.4);
+  }
+  .card .preview {
+    height: 200px; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--bg-2), var(--bg-3));
+  }
+  .card .preview .icon { font-size: 64px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+  .card.s1 .preview { background: radial-gradient(circle at 50% 60%, rgba(251,191,36,0.25), transparent 60%), linear-gradient(135deg, #1E1B4B, #4C1D95); }
+  .card.s2 .preview { background: radial-gradient(circle at 50% 50%, rgba(56,189,248,0.25), transparent 60%), linear-gradient(135deg, #1E1B4B, #312E81); }
+  .card.s3 .preview { background: radial-gradient(circle at 50% 50%, rgba(251,191,36,0.20), transparent 60%), linear-gradient(135deg, #312E81, #1E1B4B); }
+  .card.s4 .preview { background: radial-gradient(circle at 50% 50%, rgba(236,72,153,0.30), transparent 60%), linear-gradient(135deg, #1E1B4B, #4C1D95); }
+  .card.s5 .preview { background: radial-gradient(circle at 50% 50%, rgba(34,211,238,0.25), transparent 60%), linear-gradient(135deg, #1E1B4B, #312E81); }
+  .card.s6 .preview { background: radial-gradient(circle at 50% 50%, rgba(192,132,252,0.20), transparent 60%), linear-gradient(135deg, #0F0C29, #1E1B4B); }
+  .card .body { padding: 14px 16px 16px; }
+  .card .body .name { font-size: 15px; font-weight: 800; }
+  .card .body .desc { font-size: 12px; color: var(--ink-dim); margin-top: 4px; line-height: 1.5; }
+  .card .arrow {
+    position: absolute; top: 12px; right: 12px;
+    width: 28px; height: 28px; border-radius: 999px;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-soft); font-size: 14px;
+  }
+  .card:hover .arrow { background: var(--gold); color: #1E1B4B; border-color: var(--gold); }
+
+  .flow {
+    margin-top: 56px;
+    padding: 24px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .flow h3 { margin: 0 0 14px; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--gold); text-transform: uppercase; }
+  .flow ul {
+    margin: 0; padding: 0; list-style: none;
+    display: grid; gap: 10px;
+  }
+  .flow li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--ink-soft); line-height: 1.5;
+  }
+  .flow li .dot {
+    width: 6px; height: 6px; border-radius: 999px; background: var(--gold);
+    flex-shrink: 0;
+  }
+  .flow li code {
+    font-family: 'SF Mono', ui-monospace, monospace;
+    background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;
+    font-size: 11px; color: var(--cyan);
+  }
+
+  .reset-row {
+    display: flex; gap: 10px; align-items: center;
+    margin-top: 24px; font-size: 12px; color: var(--ink-dim);
+  }
+  .reset-row button {
+    background: transparent; border: 1px solid rgba(255,255,255,0.18);
+    color: var(--ink-soft); padding: 6px 12px; border-radius: 8px;
+    font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .reset-row button:hover { background: rgba(255,255,255,0.06); border-color: var(--gold); color: var(--gold); }
+
+  /* Mini coin */
+  .coin {
+    width: 80px; height: 80px; border-radius: 999px;
+    background: radial-gradient(circle at 35% 30%, #FCD34D, #B45309);
+    border: 3px solid #92400E;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 -4px 8px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4);
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="wrap">
+    <span class="crest">✦ Prototype v0.1 ✦</span>
+    <h1>경제 마법사 학교</h1>
+    <p class="sub">아이가 처음 '내 돈'을 손에 쥐는 그 순간을 위한 경제 교육 마법학교 앱.<br/>
+       6개 화면이 하나의 흐름으로 연결되어 있어요.</p>
+    <div class="meta">
+      <span class="pill">7~9세 어린이</span>
+      <span class="pill">375 × 667 모바일 우선</span>
+      <span class="pill">React + 인라인 JSX</span>
+      <span class="pill">6 / 6 화면 구현 완료</span>
+    </div>
+
+    <div class="start-bar">
+      <div class="coin">🪄</div>
+      <div class="info">
+        <div class="title">시작하기</div>
+        <div class="desc">화면 1부터 차례대로 흐름을 따라가 보세요. 속성을 고르면 다음 화면들의 마법사 색이 바뀌어요.</div>
+      </div>
+      <a class="btn btn-primary" href="onboarding.html">온보딩부터 시작 →</a>
+      <a class="btn btn-ghost" href="screen1.html">입학식부터</a>
+      <a class="btn btn-ghost" href="screen2.html">대시보드부터</a>
+    </div>
+
+    <div class="section-h">
+      <span class="num">SCREENS</span>
+      <h2>전체 화면 한눈에</h2>
+    </div>
+    <div class="grid">
+      <a class="card s1" href="screen1.html">
+        <div class="num-tag">화면 1</div>
+        <div class="arrow">→</div>
+        <div class="preview"><span class="icon">🪙</span></div>
+        <div class="body">
+          <div class="name">시작 — 마법 속성 선택</div>
+          <div class="desc">5개 골드 동전 중 하나를 골라 캐릭터의 속성을 깨워요.</div>
+        </div>
+      </a>
+      <a class="card s2" href="screen2.html">
+        <div class="num-tag">화면 2</div>
+        <div class="arrow">→</div>
+        <div class="preview"><span class="icon">🧙</span></div>
+        <div class="body">
+          <div class="name">메인 — 대시보드</div>
+          <div class="desc">캐릭터, 마법 동전, 오늘의 수업과 임무가 모이는 허브.</div>
+        </div>
+      </a>
+      <a class="card s3" href="screen3.html">
+        <div class="num-tag">화면 3</div>
+        <div class="arrow">→</div>
+        <div class="preview"><span class="icon">📖</span></div>
+        <div class="body">
+          <div class="name">기록 — 마법서</div>
+          <div class="desc">오늘의 소비를 적고 그때의 마음을 감정 스티커로 골라요.</div>
+        </div>
+      </a>
+      <a class="card s4" href="screen4.html">
+        <div class="num-tag">화면 4</div>
+        <div class="arrow">→</div>
+        <div class="preview"><span class="icon">✨</span></div>
+        <div class="body">
+          <div class="name">친구 만나기</div>
+          <div class="desc">감정에 따라 몬스터가 등장하고, 마법으로 마음 친구가 돼요.</div>
+        </div>
+      </a>
+      <a class="card s5" href="screen5.html">
+        <div class="num-tag">화면 5</div>
+        <div class="arrow">→</div>
+        <div class="preview"><span class="icon">📚</span></div>
+        <div class="body">
+          <div class="name">배움 카드</div>
+          <div class="desc">5장의 카드로 진행되는 5분 마법 수업과 작은 퀴즈.</div>
+        </div>
+      </a>
+      <a class="card s6" href="screen6.html">
+        <div class="num-tag">화면 6</div>
+        <div class="arrow">→</div>
+        <div class="preview"><span class="icon">🔮</span></div>
+        <div class="body">
+          <div class="name">부모 화면</div>
+          <div class="desc">주간 리포트와 대화 가이드 카드가 부모님을 도와요.</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="flow">
+      <h3>✦ 화면 간 연결 흐름</h3>
+      <ul>
+        <li><span class="dot"></span><code>화면 1</code> 속성 선택 → "선택 완료" → <code>화면 2</code> 대시보드 (속성을 sessionStorage에 저장)</li>
+        <li><span class="dot"></span><code>화면 2</code> 📚 오늘의 수업 카드 → <code>화면 5</code> 배움 카드</li>
+        <li><span class="dot"></span><code>화면 2</code> ✏️ 오늘의 소비 기록하기 → <code>화면 3</code> 마법서</li>
+        <li><span class="dot"></span><code>화면 2</code> 👨‍👩‍👧 부모님 화면 보기 → <code>화면 6</code> 주간 리포트</li>
+        <li><span class="dot"></span><code>화면 3</code> 마법서에 적기 → <code>화면 4</code> 친구 만나기 (감정 전달)</li>
+        <li><span class="dot"></span><code>화면 4 · 5 · 6</code> 마무리 / 닫기 → <code>화면 2</code> 대시보드</li>
+      </ul>
+      <div class="reset-row">
+        선택한 속성과 마지막 감정이 저장돼 있어요.
+        <button id="reset">전체 초기화</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.getElementById('reset').addEventListener('click', () => {
+    try { sessionStorage.clear(); } catch (e) {}
+    const b = document.getElementById('reset');
+    b.textContent = '초기화 완료 ✓';
+    setTimeout(() => { b.textContent = '전체 초기화'; }, 1400);
+  });
+</script>
+</body>
+</html>
