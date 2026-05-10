@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ATTRIBUTES } from './data/attributes';
+import { appendRecord } from './lib/storage';
 import OnboardingScreen from './screens/OnboardingScreen';
 import DashboardScreen from './screens/DashboardScreen';
-import PlaceholderScreen from './screens/PlaceholderScreen';
+import RecordingScreen from './screens/RecordingScreen';
 
 // App — 화면 라우팅 머신.
 // state: 'onboarding' | 'dashboard' | 'recording'
 // 마운트 시 localStorage.selectedMagic 이 ATTRIBUTES 에 존재하는 유효 키면 'dashboard' 로 진입.
-// 'recording' 은 화면 3 자리 — Phase 3 에서 RecordScreen 으로 교체될 PlaceholderScreen.
+// 'recording' 은 화면 3 — RecordingScreen. onSave 시 records 영속화 + 대시보드 복귀.
 // (외부 라우터 라이브러리 미사용 — Sunday prototype 범위 최소화.)
 
 function readStoredMagic() {
@@ -40,7 +41,15 @@ export default function App() {
   };
 
   if (screen === 'recording') {
-    return <PlaceholderScreen selectedKey={selectedKey} />;
+    return (
+      <RecordingScreen
+        onSave={(record) => {
+          appendRecord(record);
+          setScreen('dashboard');
+        }}
+        onBack={() => setScreen('dashboard')}
+      />
+    );
   }
   if (screen === 'dashboard') {
     return (
