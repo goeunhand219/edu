@@ -72,13 +72,13 @@ Declared values (multiples of 4, child-friendly = generous):
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 16px | 400 (regular) | 1.6 | 부제, 행동 가이드, 동전 라벨, 일반 텍스트 |
-| Heading | 24px | 600 (semibold) | 1.4 | "✨ 경제 마법사 학교 ✨" 타이틀, 화면 헤더 |
+| Heading | 24px | 700 (bold) | 1.4 | "✨ 경제 마법사 학교 ✨" 타이틀, 화면 헤더 |
 | Display | 32px | 700 (bold) | 1.3 | 큰 강조 (선택 후 메시지 "○○의 힘이 깨어났어!") |
-| Label | 14px | 500 (medium) | 1.4 | 동전 하단 한글 라벨 ("불", "물" 등) — 본문보다 작게 허용 |
+| Label | 14px | 400 (regular) | 1.4 | 동전 하단 한글 라벨 ("불", "물" 등) — 본문보다 작게 허용 |
 
 **Rules:**
-- Maximum 4 sizes (body 16 / label 14 / heading 24 / display 32) — matches CLAUDE.md typography spec exactly.
-- Maximum 3 weights (regular 400 / medium 500 / semibold 600 / bold 700) — bold reserved for display only.
+- Maximum 4 sizes (label 14 / body 16 / heading 24 / display 32) — matches CLAUDE.md typography spec exactly.
+- Maximum 2 weights (regular 400 / bold 700) — regular for body + label, bold for heading + display. Hierarchy is carried by the size scale, not weight variation (aligns with CLAUDE.md "글자 크기 큼" child-readability direction).
 - Body line-height **1.6** (not 1.5) — PRD requires 줄간격 넓게 for child readability (CLAUDE.md accessibility rule).
 - Letter-spacing: default (0) for body; `-0.01em` for heading/display to keep large text visually tight.
 - Text alignment: center for Screen 1 (onboarding ceremony tone); left will be Phase 2/3 default.
