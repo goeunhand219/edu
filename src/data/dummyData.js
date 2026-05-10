@@ -20,3 +20,9 @@ export const today = {
     progressText: '3/5일',
   },
 };
+
+// 화면 6 (부모) 대화 가이드 카드.
+export const parentTalk = {
+  title: '이번 주 대화 주제',
+  body: '이번 주 가장 후회됐던 소비를 함께 이야기해봐요. 후회는 잘못이 아니라 배움의 신호예요.',
+};
