@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>경제 마법사 학교 — 화면 6 (부모)</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0b0820;
+    font-family: 'Pretendard', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    color: #fff; overflow: hidden; height: 100%; }
+  #root { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .phone-scroll::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef } = React;
+
+// Mock weekly data
+const STATS = {
+  weekRange: '5월 1일 — 5월 7일',
+  child: { name: '민지', magic: '물', emoji: '💧' },
+  recordCount: 5,
+  friendsMet: 3,
+  lessonsCompleted: 4,
+  missionProgress: 60,
+};
+
+const SPENDING = [
+  { day: '월', item: '슬라임',     amount: 3000, emotion: '😅', color: '#FBBF24' },
+  { day: '화', item: '딱지',       amount: 1500, emotion: '🤔', color: '#22D3EE' },
+  { day: '수', item: '아이스크림', amount: 2000, emotion: '😍', color: '#84CC16' },
+  { day: '목', item: '만화책',     amount: 4500, emotion: '✨', color: '#F472B6' },
+  { day: '금', item: '뽑기',       amount: 1000, emotion: '😢', color: '#C084FC' },
+];
+
+const FRIENDS_MET = [
+  { id: 'decision', name: '결단이', emoji: '😌', color: '#22D3EE', count: 2 },
+  { id: 'satisfied', name: '만족이', emoji: '🌟', color: '#FBBF24', count: 2 },
+  { id: 'learning', name: '배움이', emoji: '📖', color: '#C084FC', count: 1 },
+];
+
+const TALK_CARDS = [
+  {
+    id: 1,
+    accent: '#22D3EE',
+    tag: '관찰',
+    title: '"슬라임을 살까 말까 한참 고민했더라"',
+    body: '아이가 화요일에 1,500원 딱지를 사기 전, 위시리스트에 30분 담아뒀어요.',
+    cta: '"고민하는 그 시간이 어떤 느낌이었어?"',
+  },
+  {
+    id: 2,
+    accent: '#F472B6',
+    tag: '공감',
+    title: '"뽑기 천 원, 아쉬웠을 것 같아"',
+    body: '금요일 뽑기 후 \'후회돼\' 감정을 골랐어요. 처음으로 후회씨를 만난 날.',
+    cta: '"다음에 뽑기 보면 어떤 마음이 들 것 같아?"',
+  },
+  {
+    id: 3,
+    accent: '#84CC16',
+    tag: '응원',
+    title: '"이번 주 마법 임무 60% 진행 중!"',
+    body: '"위시리스트 3일 담아두기" 임무를 꾸준히 잘 해내고 있어요.',
+    cta: '"이번 주 끝까지 함께 해볼래?"',
+  },
+];
+
+// ─────────── Subtle particles ───────────
+function StarField() {
+  const ref = useRef();
+  useEffect(() => {
+    const c = ref.current; const ctx = c.getContext('2d');
+    const w = c.width = c.offsetWidth * devicePixelRatio;
+    const h = c.height = c.offsetHeight * devicePixelRatio;
+    const stars = Array.from({ length: 35 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: (Math.random() * 1.0 + 0.3) * devicePixelRatio,
+      vy: -(Math.random() * 0.15 + 0.03) * devicePixelRatio,
+      a: Math.random() * 0.4 + 0.15, tw: Math.random() * Math.PI * 2,
+    }));
+    let raf;
+    const tick = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.y += s.vy; s.tw += 0.04;
+        if (s.y < -5) { s.y = h + 5; s.x = Math.random() * w; }
+        const a = s.a * (0.6 + 0.4 * Math.sin(s.tw));
+        ctx.fillStyle = `rgba(255, 240, 200, ${a})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}/>;
+}
+
+// ─────────── Stat tile ───────────
+function StatTile({ label, value, unit, accent, icon, sub }) {
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.05)',
+      border: `1px solid ${accent}55`,
+      borderRadius: 16, padding: '12px 14px',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', top: -10, right: -10,
+        fontSize: 56, opacity: 0.08,
+      }}>{icon}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: accent, letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ marginTop: 4, display: 'flex', alignItems: 'baseline', gap: 3 }}>
+        <span style={{ fontSize: 26, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{value}</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{unit}</span>
+      </div>
+      <div style={{ marginTop: 4, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{sub}</div>
+    </div>
+  );
+}
+
+// ─────────── Bar chart for week spending ───────────
+function SpendingChart() {
+  const max = Math.max(...SPENDING.map(s => s.amount));
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8,
+      alignItems: 'end', height: 110,
+    }}>
+      {SPENDING.map((s, i) => (
+        <div key={i} style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 4, height: '100%', justifyContent: 'flex-end',
+        }}>
+          <div style={{ fontSize: 11, opacity: 0.7 }}>{s.emotion}</div>
+          <div style={{
+            width: '100%', height: `${(s.amount / max) * 70}%`,
+            minHeight: 14,
+            background: `linear-gradient(180deg, ${s.color}, ${s.color}66)`,
+            borderRadius: '6px 6px 2px 2px',
+            border: `1px solid ${s.color}99`,
+            boxShadow: `0 0 10px ${s.color}44`,
+            position: 'relative',
+          }}>
+            <div style={{
+              position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)',
+              fontSize: 9, color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap',
+            }}>{s.amount.toLocaleString()}</div>
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)' }}>{s.day}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────── Talk card ───────────
+function TalkCard({ card, expanded, onToggle }) {
+  return (
+    <div onClick={onToggle} style={{
+      background: 'rgba(255,255,255,0.05)',
+      border: `1px solid ${card.accent}66`,
+      borderRadius: 16, padding: '14px 16px',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+      cursor: 'pointer',
+      transition: 'transform .2s, border-color .2s',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 10, marginBottom: 8,
+      }}>
+        <span style={{
+          background: `${card.accent}22`, color: card.accent,
+          fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6,
+          letterSpacing: '0.06em',
+        }}>{card.tag}</span>
+        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
+          {expanded ? '▴' : '▾'}
+        </span>
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.4 }}>
+        {card.title}
+      </div>
+      {expanded && (
+        <div style={{ animation: 'fadeUp .25s ease' }}>
+          <p style={{
+            margin: '8px 0 10px', fontSize: 12, color: 'rgba(255,255,255,0.7)',
+            lineHeight: 1.5,
+          }}>{card.body}</p>
+          <div style={{
+            padding: '10px 12px', borderRadius: 10,
+            background: `linear-gradient(135deg, ${card.accent}22, rgba(255,255,255,0.04))`,
+            border: `1px dashed ${card.accent}77`,
+            fontSize: 13, color: '#FEF3C7', fontWeight: 700, lineHeight: 1.5,
+          }}>
+            💬 이렇게 물어볼까요?<br/>
+            <span style={{ color: card.accent }}>{card.cta}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────── Screen 6 ───────────
+function Screen6() {
+  const [tab, setTab] = useState('week');
+  const [expanded, setExpanded] = useState(1);
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: 'radial-gradient(120% 80% at 50% 0%, #312E81 0%, #1E1B4B 50%, #0c0a3e 100%)',
+      overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    }}>
+      <StarField/>
+
+      {/* top nav */}
+      <div style={{
+        position: 'relative', zIndex: 5, paddingTop: 60, padding: '60px 16px 4px',
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <button onClick={() => { window.location.href = 'screen2.html'; }} style={{
+          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+          color: '#fff', borderRadius: 999, width: 36, height: 36, fontSize: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', fontFamily: 'inherit',
+        }}>‹</button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, color: '#FBBF24', fontWeight: 700, letterSpacing: '0.1em' }}>
+            🔮 부모 모드
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>
+            {STATS.child.name}의 한 주 ✦
+          </div>
+        </div>
+        <div style={{
+          fontSize: 10, padding: '4px 8px', borderRadius: 6,
+          background: 'rgba(132,204,22,0.18)', color: '#BEF264', fontWeight: 700, letterSpacing: '0.05em',
+        }}>● LIVE</div>
+      </div>
+
+      {/* segment tabs */}
+      <div style={{ position: 'relative', zIndex: 5, padding: '8px 16px 6px' }}>
+        <div style={{
+          display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12,
+          padding: 3, border: '1px solid rgba(255,255,255,0.08)',
+        }}>
+          {[['week', '이번 주'], ['month', '이번 달'], ['all', '전체']].map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)} style={{
+              flex: 1, height: 32, border: 'none', borderRadius: 9, fontFamily: 'inherit',
+              background: tab === id ? '#FBBF24' : 'transparent',
+              color: tab === id ? '#1E1B4B' : 'rgba(255,255,255,0.6)',
+              fontWeight: 800, fontSize: 12, cursor: 'pointer',
+              transition: 'all .2s',
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="phone-scroll" style={{
+        position: 'relative', zIndex: 2, flex: 1, overflowY: 'auto',
+        padding: '12px 16px 24px',
+      }}>
+        {/* week summary header */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+            {STATS.weekRange}
+          </div>
+        </div>
+
+        {/* stats grid */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16,
+        }}>
+          <StatTile label="기록한 모험" value={STATS.recordCount} unit="건"
+            accent="#22D3EE" icon="📖" sub="평균 매일 0.7건"/>
+          <StatTile label="만난 마음 친구" value={STATS.friendsMet} unit="/ 5명"
+            accent="#F472B6" icon="✨" sub="이번 주 +1명"/>
+          <StatTile label="완료한 수업" value={STATS.lessonsCompleted} unit="개"
+            accent="#84CC16" icon="📚" sub="총 7일 중 4일"/>
+          <StatTile label="주간 임무" value={STATS.missionProgress} unit="%"
+            accent="#FBBF24" icon="🎯" sub="3/5일 진행"/>
+        </div>
+
+        {/* spending chart */}
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 16, padding: '14px 16px 12px',
+          marginBottom: 16,
+        }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14,
+          }}>
+            <div>
+              <div style={{ fontSize: 12, color: '#FEF3C7', fontWeight: 800 }}>
+                💰 이번 주 소비
+              </div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                감정별 색깔로 표시돼요
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#FBBF24' }}>12,000원</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>총 5건</div>
+            </div>
+          </div>
+          <SpendingChart/>
+        </div>
+
+        {/* friends collection */}
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 16, padding: '14px 16px',
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 12, color: '#FEF3C7', fontWeight: 800, marginBottom: 10 }}>
+            ✨ 만난 마음 친구
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-around' }}>
+            {FRIENDS_MET.map(f => (
+              <div key={f.id} style={{
+                flex: 1, textAlign: 'center', padding: '10px 6px',
+                background: `${f.color}15`,
+                border: `1px solid ${f.color}55`,
+                borderRadius: 12,
+              }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: `radial-gradient(circle, ${f.color}, ${f.color}66)`,
+                  margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, boxShadow: `0 0 12px ${f.color}66`,
+                }}>{f.emoji}</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', marginTop: 6 }}>{f.name}</div>
+                <div style={{ fontSize: 10, color: f.color, marginTop: 2 }}>{f.count}번</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* talk cards */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            padding: '0 4px 8px',
+          }}>
+            <div style={{ fontSize: 13, color: '#FEF3C7', fontWeight: 800 }}>
+              💬 이번 주 대화 가이드
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>3장</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {TALK_CARDS.map(c => (
+              <TalkCard key={c.id} card={c}
+                expanded={expanded === c.id}
+                onToggle={() => setExpanded(expanded === c.id ? null : c.id)}/>
+            ))}
+          </div>
+        </div>
+
+        {/* gentle note */}
+        <div style={{
+          padding: '12px 14px', borderRadius: 12,
+          background: 'rgba(196,132,252,0.08)',
+          border: '1px dashed rgba(196,132,252,0.4)',
+          fontSize: 11, color: '#DDD6FE', lineHeight: 1.55, textAlign: 'center',
+        }}>
+          🪄 {STATS.child.name}의 기록은 {STATS.child.name}만 볼 수 있어요.<br/>
+          부모님께는 패턴과 통계만 전달돼요.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <IOSDevice width={390} height={780} dark={true}><Screen6/></IOSDevice>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+document.body.insertAdjacentHTML('beforeend', `<style>
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>`);
+</script>
+</body>
+</html>

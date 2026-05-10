@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>경제 마법사 학교 — 화면 2</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: #0b0820;
+    font-family: 'Pretendard', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #fff;
+    overflow: hidden;
+    height: 100%;
+  }
+  #root { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  /* hide scrollbar inside phone */
+  .phone-scroll::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef } = React;
+
+// ─────────── data ───────────
+const MAGIC_MAP = {
+  fire:     { emoji: '🔥', name: '불',   color: '#F97316', glow: '#FB923C', soft: '#FED7AA' },
+  water:    { emoji: '💧', name: '물',   color: '#38BDF8', glow: '#7DD3FC', soft: '#BAE6FD' },
+  electric: { emoji: '⚡', name: '전기', color: '#FACC15', glow: '#FDE68A', soft: '#FEF3C7' },
+  earth:    { emoji: '🌱', name: '흙',   color: '#84CC16', glow: '#BEF264', soft: '#D9F99D' },
+  wind:     { emoji: '🌬️', name: '바람', color: '#C084FC', glow: '#DDD6FE', soft: '#EDE9FE' },
+};
+
+const STORED_MAGIC = (() => { try { return sessionStorage.getItem('selectedMagic'); } catch(e) { return null; } })();
+const STORED_NAME = (() => { try { return sessionStorage.getItem('userName'); } catch(e) { return null; } })();
+const USER = {
+  name: STORED_NAME || '민지',
+  selectedMagic: STORED_MAGIC || 'water',
+  level: 2,
+  coins: 145,
+};
+
+const TODAY = {
+  lesson: { id: 1, title: '용돈은 어디서 오는 걸까?', subtitle: '5분 마법 수업 · 동전 10개', completed: false },
+  weeklyMission: {
+    title: '갖고 싶은 걸 3일 동안\n위시리스트에 담아두기',
+    progress: 60, progressText: '3/5일',
+    icon: '📋',
+  },
+};
+
+// ─────────── Star particles (shared) ───────────
+function StarField() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = canvas.offsetWidth * devicePixelRatio;
+    const h = canvas.height = canvas.offsetHeight * devicePixelRatio;
+    const stars = Array.from({ length: 60 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: (Math.random() * 1.3 + 0.4) * devicePixelRatio,
+      vy: -(Math.random() * 0.22 + 0.04) * devicePixelRatio,
+      a: Math.random() * 0.55 + 0.2,
+      tw: Math.random() * Math.PI * 2,
+    }));
+    let raf;
+    const tick = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.y += s.vy; s.tw += 0.04;
+        if (s.y < -5) { s.y = h + 5; s.x = Math.random() * w; }
+        const a = s.a * (0.6 + 0.4 * Math.sin(s.tw));
+        ctx.fillStyle = `rgba(255, 240, 200, ${a})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <canvas ref={canvasRef} style={{
+    position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none',
+  }} />;
+}
+
+// ─────────── SVG Wizard Character (water-themed by default) ───────────
+function Wizard({ magic }) {
+  const m = magic;
+  const [shake, setShake] = useState(false);
+  const trigger = () => { setShake(true); setTimeout(() => setShake(false), 600); };
+
+  return (
+    <div
+      onClick={trigger}
+      style={{
+        position: 'relative', cursor: 'pointer',
+        animation: shake ? 'wizShake .55s cubic-bezier(.36,.07,.19,.97)' : 'wizFloat 3.2s ease-in-out infinite',
+      }}
+    >
+      {/* glow disk under feet */}
+      <div style={{
+        position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)',
+        width: 140, height: 22, borderRadius: '50%',
+        background: `radial-gradient(ellipse, ${m.color}55 0%, transparent 70%)`,
+        filter: 'blur(4px)',
+      }}/>
+      <svg width="180" height="200" viewBox="0 0 180 200" style={{
+        filter: `drop-shadow(0 0 18px ${m.color}66)`,
+      }}>
+        <defs>
+          <radialGradient id="orbG" cx="35%" cy="30%">
+            <stop offset="0%" stopColor="#fff" stopOpacity="0.95"/>
+            <stop offset="40%" stopColor={m.glow}/>
+            <stop offset="100%" stopColor={m.color}/>
+          </radialGradient>
+          <linearGradient id="robeG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={m.color}/>
+            <stop offset="100%" stopColor="#1E1B4B"/>
+          </linearGradient>
+          <linearGradient id="hatG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={m.glow}/>
+            <stop offset="60%" stopColor={m.color}/>
+            <stop offset="100%" stopColor="#312E81"/>
+          </linearGradient>
+        </defs>
+
+        {/* hat back tip */}
+        <path d="M90 8 L70 60 L110 60 Z" fill="url(#hatG)"/>
+        {/* hat brim */}
+        <ellipse cx="90" cy="62" rx="38" ry="7" fill="#1E1B4B" stroke={m.glow} strokeWidth="1.5"/>
+        {/* hat band stars */}
+        <circle cx="76" cy="55" r="1.5" fill="#FBBF24"/>
+        <circle cx="90" cy="50" r="1.8" fill="#FBBF24"/>
+        <circle cx="104" cy="55" r="1.5" fill="#FBBF24"/>
+
+        {/* face */}
+        <ellipse cx="90" cy="80" rx="22" ry="20" fill="#FDE68A"/>
+        {/* hair shadow under hat */}
+        <path d="M70 70 Q90 76 110 70 L110 78 Q90 82 70 78 Z" fill="#7C2D12" opacity="0.4"/>
+        {/* eyes */}
+        <circle cx="82" cy="82" r="2.2" fill="#1E1B4B"/>
+        <circle cx="98" cy="82" r="2.2" fill="#1E1B4B"/>
+        <circle cx="82.7" cy="81.3" r="0.7" fill="#fff"/>
+        <circle cx="98.7" cy="81.3" r="0.7" fill="#fff"/>
+        {/* cheeks */}
+        <ellipse cx="78" cy="88" rx="3.5" ry="2" fill="#F472B6" opacity="0.55"/>
+        <ellipse cx="102" cy="88" rx="3.5" ry="2" fill="#F472B6" opacity="0.55"/>
+        {/* smile */}
+        <path d="M84 91 Q90 95 96 91" stroke="#1E1B4B" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+
+        {/* robe body */}
+        <path d="M58 102 Q90 96 122 102 L132 180 Q90 188 48 180 Z" fill="url(#robeG)"/>
+        {/* robe collar V */}
+        <path d="M78 100 L90 118 L102 100" stroke={m.glow} strokeWidth="2" fill="none" strokeLinejoin="round"/>
+        {/* belt */}
+        <rect x="70" y="138" width="40" height="6" fill="#FBBF24" rx="1"/>
+        <circle cx="90" cy="141" r="3" fill="#FEF3C7" stroke="#92400E" strokeWidth="0.8"/>
+
+        {/* left sleeve / arm holding orb */}
+        <path d="M58 108 Q42 130 38 152 Q44 158 56 154 Q62 138 70 128 Z" fill="url(#robeG)"/>
+        {/* orb */}
+        <circle cx="38" cy="156" r="14" fill="url(#orbG)">
+          <animate attributeName="r" values="14;15.5;14" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="34" cy="152" r="3" fill="#fff" opacity="0.85"/>
+
+        {/* right arm */}
+        <path d="M122 108 Q138 124 138 148 L128 152 Q120 130 116 122 Z" fill="url(#robeG)"/>
+
+        {/* magic sparkles around orb */}
+        <g style={{ transformOrigin: '38px 156px', animation: 'spinSlow 6s linear infinite' }}>
+          <circle cx="20" cy="156" r="1.6" fill={m.glow}/>
+          <circle cx="56" cy="156" r="1.4" fill={m.glow}/>
+          <circle cx="38" cy="138" r="1.5" fill="#FBBF24"/>
+          <circle cx="38" cy="174" r="1.3" fill="#FBBF24"/>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// ─────────── Card ───────────
+function Card({ children, accent = '#FBBF24', style = {}, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: 'rgba(255,255,255,0.07)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        border: `1px solid ${accent}55`,
+        borderRadius: 18,
+        padding: 16,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.25)`,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform .15s, border-color .2s',
+        ...style,
+      }}
+      onMouseEnter={onClick ? (e) => e.currentTarget.style.borderColor = accent : undefined}
+      onMouseLeave={onClick ? (e) => e.currentTarget.style.borderColor = accent + '55' : undefined}
+    >{children}</div>
+  );
+}
+
+// ─────────── Toast ───────────
+function Toast({ msg, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 1800); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div style={{
+      position: 'absolute', left: 24, right: 24, bottom: 90, zIndex: 200,
+      background: 'rgba(30, 27, 75, 0.92)',
+      border: '1px solid rgba(251,191,36,0.45)',
+      color: '#FEF3C7', borderRadius: 14, padding: '14px 18px',
+      fontSize: 13.5, fontWeight: 600, textAlign: 'center',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+      animation: 'toastIn .25s ease, toastOut .25s ease 1.55s forwards',
+    }}>{msg}</div>
+  );
+}
+
+// ─────────── Screen 2 ───────────
+function Screen2() {
+  const m = MAGIC_MAP[USER.selectedMagic];
+  const [toast, setToast] = useState(null);
+  const [coins] = useState(USER.coins);
+
+  const showToast = (msg) => setToast(msg);
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: 'radial-gradient(120% 80% at 50% 0%, #4C1D95 0%, #312E81 45%, #1E1B4B 100%)',
+      overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <StarField />
+
+      <button onClick={() => { window.location.href = 'index.html'; }}
+        title="프로토타입 홈"
+        style={{
+          position: 'absolute', top: 12, left: 12, zIndex: 50,
+          background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.18)',
+          color: '#fff', borderRadius: 999, padding: '6px 12px',
+          fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>🏠 <span>홈</span></button>
+
+      {/* Scrollable content */}
+      <div className="phone-scroll" style={{
+        position: 'relative', zIndex: 2,
+        flex: 1, overflowY: 'auto',
+        paddingTop: 60, paddingBottom: 110,
+      }}>
+        {/* Top: greeting + character card */}
+        <div style={{ padding: '12px 20px 0' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+            marginBottom: 14,
+          }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24',
+                letterSpacing: '0.1em', marginBottom: 4 }}>
+                ✦ TODAY · 5월 7일 목요일 ✦
+              </div>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#fff', lineHeight: 1.2 }}>
+                어서 와, {USER.name}! <span style={{ filter: 'drop-shadow(0 0 4px gold)' }}>🪄</span>
+              </h1>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+                오늘은 어떤 마법을 부려볼까?
+              </p>
+            </div>
+            {/* coin pill */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(251,191,36,0.14)', border: '1px solid rgba(251,191,36,0.5)',
+              borderRadius: 999, padding: '6px 10px 6px 7px',
+              boxShadow: '0 0 14px rgba(251,191,36,0.2)',
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: '50%',
+                background: 'radial-gradient(circle at 30% 30%, #FEF3C7, #FCD34D 40%, #B45309 100%)',
+                border: '1.5px solid #92400E', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 800, color: '#7C2D12',
+              }}>✦</div>
+              <span style={{ fontSize: 14, fontWeight: 800, color: '#FBBF24' }}>{coins}</span>
+            </div>
+          </div>
+
+          {/* character hero card */}
+          <div style={{
+            position: 'relative',
+            background: `linear-gradient(160deg, ${m.color}22 0%, rgba(76,29,149,0.4) 60%)`,
+            border: `1px solid ${m.color}66`,
+            borderRadius: 22,
+            padding: '18px 16px 12px',
+            overflow: 'hidden',
+            boxShadow: `0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 30px ${m.color}22`,
+          }}>
+            {/* identity row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
+              <div>
+                <div style={{ fontSize: 11, color: m.glow, fontWeight: 700, letterSpacing: '0.05em' }}>
+                  CLASS OF THE {m.name.toUpperCase()}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginTop: 2 }}>
+                  {m.emoji} {m.name} 마법사
+                </div>
+                {/* level */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                  <span style={{
+                    background: '#FBBF24', color: '#1E1B4B',
+                    fontSize: 10, fontWeight: 900, padding: '2px 7px', borderRadius: 6, letterSpacing: '0.05em',
+                  }}>LV.{USER.level}</span>
+                  {/* xp bar */}
+                  <div style={{ width: 80, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.15)', overflow: 'hidden' }}>
+                    <div style={{ width: '40%', height: '100%', background: `linear-gradient(90deg, ${m.glow}, #FBBF24)`, borderRadius: 999 }}/>
+                  </div>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>40/100</span>
+                </div>
+              </div>
+            </div>
+
+            {/* character */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: -4, marginBottom: -16 }}>
+              <Wizard magic={m}/>
+            </div>
+
+            {/* hint */}
+            <div style={{
+              position: 'absolute', right: 14, bottom: 10,
+              fontSize: 10, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic',
+            }}>탭해서 인사하기 ✦</div>
+          </div>
+        </div>
+
+        {/* Section: today's class & mission */}
+        <div style={{ padding: '20px 20px 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10,
+          }}>
+            <h2 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#FEF3C7' }}>
+              📜 오늘의 마법 두루마리
+            </h2>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>2개</span>
+          </div>
+
+          {/* lesson card */}
+          <Card accent="#22D3EE" onClick={() => { window.location.href = 'screen5.html'; }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{
+                width: 46, height: 46, flexShrink: 0, borderRadius: 12,
+                background: 'linear-gradient(135deg, #22D3EE 0%, #0E7490 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22, boxShadow: '0 4px 10px rgba(34,211,238,0.35)',
+              }}>📚</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                  <span style={{
+                    background: 'rgba(34,211,238,0.18)', color: '#67E8F9',
+                    fontSize: 9.5, fontWeight: 800, padding: '2px 6px', borderRadius: 5, letterSpacing: '0.05em',
+                  }}>NEW · DAY 7</span>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>· 5분</span>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>
+                  "용돈은 어디서 오는 걸까?"
+                </div>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 4, marginTop: 8,
+                  fontSize: 12, fontWeight: 700, color: '#22D3EE',
+                }}>
+                  수업 들으러 가기
+                  <span>→</span>
+                </div>
+              </div>
+              {/* reward */}
+              <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginBottom: 2 }}>보상</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, color: '#FBBF24', fontWeight: 800, fontSize: 13 }}>
+                  +10 ✦
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* mission card */}
+          <div style={{ height: 12 }}/>
+          <Card accent="#EC4899" onClick={() => showToast('다음 업데이트에서 만나요! ✨')}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{
+                width: 46, height: 46, flexShrink: 0, borderRadius: 12,
+                background: 'linear-gradient(135deg, #F472B6 0%, #BE185D 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22, boxShadow: '0 4px 10px rgba(236,72,153,0.35)',
+              }}>{TODAY.weeklyMission.icon}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                  <span style={{
+                    background: 'rgba(236,72,153,0.2)', color: '#F9A8D4',
+                    fontSize: 9.5, fontWeight: 800, padding: '2px 6px', borderRadius: 5, letterSpacing: '0.05em',
+                  }}>WEEKLY · WEEK 3</span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.35, whiteSpace: 'pre-line' }}>
+                  {TODAY.weeklyMission.title}
+                </div>
+                {/* progress */}
+                <div style={{ marginTop: 10 }}>
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    fontSize: 11, marginBottom: 5,
+                  }}>
+                    <span style={{ color: '#F9A8D4', fontWeight: 700 }}>진행 {TODAY.weeklyMission.progress}%</span>
+                    <span style={{ color: 'rgba(255,255,255,0.5)' }}>{TODAY.weeklyMission.progressText}</span>
+                  </div>
+                  <div style={{
+                    height: 8, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden',
+                    border: '1px solid rgba(236,72,153,0.2)',
+                  }}>
+                    <div style={{
+                      width: `${TODAY.weeklyMission.progress}%`, height: '100%',
+                      background: 'linear-gradient(90deg, #F472B6, #FBBF24)',
+                      borderRadius: 999,
+                      boxShadow: '0 0 10px #F472B6',
+                    }}/>
+                  </div>
+                  {/* day dots */}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    {[1,2,3,4,5].map(d => (
+                      <div key={d} style={{
+                        flex: 1, height: 4, borderRadius: 2,
+                        background: d <= 3 ? '#F472B6' : 'rgba(255,255,255,0.12)',
+                      }}/>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* parent peek (small) */}
+        <div style={{ padding: '18px 20px 0', display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={() => { window.location.href = 'screen6.html'; }}
+            style={{
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+              color: 'rgba(255,255,255,0.6)', borderRadius: 999,
+              padding: '8px 16px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+              cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            <span>👨‍👩‍👧</span> 부모님 화면 보기 →
+          </button>
+        </div>
+      </div>
+
+      {/* Sticky CTA */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 50,
+        padding: '16px 20px 28px',
+        background: 'linear-gradient(to top, rgba(30,27,75,0.95) 0%, rgba(30,27,75,0.85) 60%, transparent 100%)',
+        pointerEvents: 'none',
+      }}>
+        <button
+          onClick={() => { window.location.href = 'screen3.html'; }}
+          style={{
+            pointerEvents: 'auto',
+            width: '100%', height: 60, borderRadius: 18, border: 'none',
+            fontFamily: 'inherit', fontSize: 17, fontWeight: 800, color: '#fff',
+            cursor: 'pointer',
+            background: 'linear-gradient(135deg, #F472B6 0%, #EC4899 50%, #BE185D 100%)',
+            boxShadow: '0 10px 28px rgba(236,72,153,0.55), inset 0 1px 0 rgba(255,255,255,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            letterSpacing: '0.01em',
+            transition: 'transform .12s',
+          }}
+          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <span style={{ fontSize: 20 }}>✏️</span>
+          오늘의 소비 기록하기
+        </button>
+      </div>
+
+      {toast && <Toast msg={toast} onDone={() => setToast(null)}/>}
+
+      <style>{`
+        @keyframes wizFloat {
+          0%, 100% { transform: translateY(0) rotate(-1deg); }
+          50%      { transform: translateY(-6px) rotate(1deg); }
+        }
+        @keyframes wizShake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-4px) rotate(-3deg); }
+          40% { transform: translateX(4px) rotate(3deg); }
+          60% { transform: translateX(-3px) rotate(-2deg); }
+          80% { transform: translateX(3px) rotate(2deg); }
+        }
+        @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateY(8px); } }
+      `}</style>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <IOSDevice width={390} height={780} dark={true}>
+        <Screen2 />
+      </IOSDevice>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

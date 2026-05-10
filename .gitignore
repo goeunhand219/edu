@@ -23,3 +23,9 @@ vite-tmp/
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code local config
+.claude/
+
+# Symlinked design preview (absolute path)
+public/_

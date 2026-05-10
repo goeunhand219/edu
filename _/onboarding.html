@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>경제 마법사 학교 — 온보딩</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: #0b0820;
+    font-family: 'Pretendard', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #fff;
+    overflow: hidden;
+    height: 100%;
+  }
+  #root { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef } = React;
+
+// ─────────── Star particles ───────────
+function StarField({ density = 50 }) {
+  const ref = useRef();
+  useEffect(() => {
+    const c = ref.current; const ctx = c.getContext('2d');
+    const w = c.width = c.offsetWidth * devicePixelRatio;
+    const h = c.height = c.offsetHeight * devicePixelRatio;
+    const stars = Array.from({ length: density }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: (Math.random() * 1.4 + 0.4) * devicePixelRatio,
+      vy: -(Math.random() * 0.25 + 0.05) * devicePixelRatio,
+      a: Math.random() * 0.55 + 0.2, tw: Math.random() * Math.PI * 2,
+    }));
+    let raf;
+    const tick = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.y += s.vy; s.tw += 0.04;
+        if (s.y < -5) { s.y = h + 5; s.x = Math.random() * w; }
+        const a = s.a * (0.6 + 0.4 * Math.sin(s.tw));
+        ctx.fillStyle = `rgba(255, 240, 200, ${a})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}/>;
+}
+
+// ─────────── Big crest illustration ───────────
+function Crest() {
+  return (
+    <svg width="180" height="180" viewBox="0 0 180 180">
+      <defs>
+        <radialGradient id="crestG" cx="35%" cy="30%">
+          <stop offset="0%" stopColor="#FEF3C7"/>
+          <stop offset="40%" stopColor="#FBBF24"/>
+          <stop offset="100%" stopColor="#92400E"/>
+        </radialGradient>
+        <linearGradient id="ribbon" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#EC4899"/><stop offset="1" stopColor="#9D174D"/>
+        </linearGradient>
+      </defs>
+      {/* outer halo */}
+      <circle cx="90" cy="90" r="78" fill="none" stroke="rgba(251,191,36,0.3)" strokeDasharray="4,5" strokeWidth="1.5">
+        <animateTransform attributeName="transform" type="rotate" from="0 90 90" to="360 90 90" dur="20s" repeatCount="indefinite"/>
+      </circle>
+      {/* shield */}
+      <path d="M90 22 L150 38 L150 96 Q150 134 90 158 Q30 134 30 96 L30 38 Z"
+            fill="url(#crestG)" stroke="#92400E" strokeWidth="2"/>
+      {/* inner border */}
+      <path d="M90 32 L142 46 L142 94 Q142 126 90 146 Q38 126 38 94 L38 46 Z"
+            fill="none" stroke="#FEF3C7" strokeWidth="1.5" opacity="0.6"/>
+      {/* wand crossing */}
+      <line x1="58" y1="120" x2="122" y2="60" stroke="#451a03" strokeWidth="4" strokeLinecap="round"/>
+      <circle cx="122" cy="60" r="6" fill="#22D3EE"/>
+      <line x1="122" y1="120" x2="58" y2="60" stroke="#451a03" strokeWidth="4" strokeLinecap="round"/>
+      <circle cx="58" cy="60" r="6" fill="#EC4899"/>
+      {/* coin center */}
+      <circle cx="90" cy="90" r="22" fill="#FCD34D" stroke="#92400E" strokeWidth="2"/>
+      <text x="90" y="100" fontSize="24" textAnchor="middle">🪙</text>
+      {/* ribbon */}
+      <path d="M50 130 L90 138 L130 130 L122 158 L90 152 L58 158 Z" fill="url(#ribbon)" stroke="#831843" strokeWidth="1.5"/>
+      <text x="90" y="151" fontSize="9" textAnchor="middle" fill="#FEF3C7" fontWeight="800" letterSpacing="2">MAGIC</text>
+      {/* sparkles */}
+      <text x="44" y="48" fontSize="12" fill="#FBBF24">✦</text>
+      <text x="130" y="48" fontSize="10" fill="#22D3EE">✦</text>
+      <text x="48" y="100" fontSize="9" fill="#fff" opacity="0.7">✦</text>
+      <text x="130" y="100" fontSize="11" fill="#FBBF24">✦</text>
+    </svg>
+  );
+}
+
+// ─────────── Pictogram per slide ───────────
+function PictoRecord() {
+  return (
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      <defs>
+        <linearGradient id="bk" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#92400E"/><stop offset="1" stopColor="#451a03"/>
+        </linearGradient>
+        <linearGradient id="pg" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#FEF3C7"/><stop offset="1" stopColor="#FCD34D"/>
+        </linearGradient>
+      </defs>
+      <g transform="translate(80 80)">
+        {/* book */}
+        <g style={{ animation: 'wobble 3s ease-in-out infinite', transformOrigin: 'center' }}>
+          <path d="M-50 -30 L-2 -36 L-2 36 L-48 30 Z" fill="url(#bk)"/>
+          <path d="M50 -30 L2 -36 L2 36 L48 30 Z" fill="url(#bk)"/>
+          <path d="M-46 -26 L-2 -32 L-2 32 L-44 26 Z" fill="url(#pg)"/>
+          <path d="M46 -26 L2 -32 L2 32 L44 26 Z" fill="url(#pg)"/>
+          <line x1="0" y1="-32" x2="0" y2="34" stroke="#FBBF24" strokeWidth="1.5"/>
+          {/* lines */}
+          <line x1="-38" y1="-12" x2="-10" y2="-15" stroke="#92400E" strokeWidth="1.5" opacity="0.5"/>
+          <line x1="-38" y1="0" x2="-10" y2="-3" stroke="#92400E" strokeWidth="1.5" opacity="0.4"/>
+          <line x1="-38" y1="12" x2="-20" y2="10" stroke="#92400E" strokeWidth="1.5" opacity="0.4"/>
+          <line x1="10" y1="-15" x2="38" y2="-12" stroke="#92400E" strokeWidth="1.5" opacity="0.5"/>
+          <line x1="10" y1="-3" x2="38" y2="0" stroke="#92400E" strokeWidth="1.5" opacity="0.4"/>
+        </g>
+        {/* sparkles around */}
+        <text x="-58" y="-50" fontSize="18">✨</text>
+        <text x="46" y="-44" fontSize="14">✦</text>
+        <text x="-50" y="58" fontSize="12">✦</text>
+        <text x="50" y="60" fontSize="16">✨</text>
+      </g>
+    </svg>
+  );
+}
+
+function PictoFriend() {
+  return (
+    <svg width="180" height="160" viewBox="0 0 180 160">
+      <defs>
+        <radialGradient id="mb" cx="40%" cy="35%">
+          <stop offset="0" stopColor="#F87171"/><stop offset="1" stopColor="#7F1D1D"/>
+        </radialGradient>
+        <radialGradient id="fb" cx="35%" cy="30%">
+          <stop offset="0" stopColor="#FFFFFF"/><stop offset="0.3" stopColor="#7DD3FC"/>
+          <stop offset="1" stopColor="#0EA5E9"/>
+        </radialGradient>
+      </defs>
+      {/* monster left */}
+      <g transform="translate(45 80)" style={{ animation: 'wobble 1.6s ease-in-out infinite' }}>
+        <path d="M0,-32 C16,-30 24,-18 22,-4 C32,4 26,18 14,18 C8,28 -8,28 -14,18 C-26,18 -32,4 -22,-4 C-24,-18 -16,-30 0,-32Z" fill="url(#mb)"/>
+        <circle cx="-8" cy="-4" r="4" fill="#fff"/><circle cx="8" cy="-4" r="4" fill="#fff"/>
+        <circle cx="-8" cy="-3" r="2" fill="#1a0303"/><circle cx="8" cy="-3" r="2" fill="#1a0303"/>
+        <path d="M-8 10 Q0 4 8 10" stroke="#1a0303" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+      </g>
+      {/* arrow / spark */}
+      <g transform="translate(90 80)">
+        <text x="0" y="6" fontSize="22" textAnchor="middle">✨</text>
+        <text x="-4" y="-22" fontSize="10" textAnchor="middle" fill="#FBBF24" fontWeight="700">변신!</text>
+      </g>
+      {/* friend right */}
+      <g transform="translate(135 80)" style={{ animation: 'friendFloat 2.6s ease-in-out infinite' }}>
+        <circle cx="0" cy="0" r="32" fill="url(#fb)"/>
+        <ellipse cx="-8" cy="-12" rx="8" ry="6" fill="#fff" opacity="0.5"/>
+        <circle cx="-8" cy="-2" r="3" fill="#1E1B4B"/><circle cx="8" cy="-2" r="3" fill="#1E1B4B"/>
+        <path d="M-8 12 Q0 18 8 12" stroke="#1E1B4B" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <ellipse cx="-12" cy="6" rx="3" ry="2" fill="#F472B6" opacity="0.6"/>
+        <ellipse cx="12" cy="6" rx="3" ry="2" fill="#F472B6" opacity="0.6"/>
+      </g>
+    </svg>
+  );
+}
+
+function PictoGrow() {
+  return (
+    <svg width="180" height="160" viewBox="0 0 180 160">
+      <defs>
+        <linearGradient id="bar" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#FBBF24"/><stop offset="1" stopColor="#B45309"/>
+        </linearGradient>
+      </defs>
+      {/* bars rising */}
+      <g transform="translate(40 130)">
+        <rect x="0" y="-30" width="22" height="30" rx="4" fill="url(#bar)" opacity="0.7"/>
+        <rect x="30" y="-50" width="22" height="50" rx="4" fill="url(#bar)" opacity="0.85"/>
+        <rect x="60" y="-78" width="22" height="78" rx="4" fill="url(#bar)"/>
+        <rect x="90" y="-100" width="22" height="100" rx="4" fill="url(#bar)" stroke="#FBBF24" strokeWidth="1.5"/>
+        {/* shine on top */}
+        <text x="101" y="-110" fontSize="20" textAnchor="middle" style={{ animation: 'twinkle 1.5s ease-in-out infinite' }}>✨</text>
+        {/* level badge */}
+        <g transform="translate(101 -135)">
+          <circle r="14" fill="#FCD34D" stroke="#92400E" strokeWidth="1.5"/>
+          <text y="4" fontSize="11" textAnchor="middle" fontWeight="900" fill="#451a03">Lv5</text>
+        </g>
+        {/* coin scatter */}
+        <text x="-15" y="-10" fontSize="14">🪙</text>
+        <text x="-20" y="-30" fontSize="10" opacity="0.7">🪙</text>
+      </g>
+    </svg>
+  );
+}
+
+// ─────────── Slide content ───────────
+const SLIDES = [
+  {
+    kind: 'welcome',
+    tag: '✦ 입학 안내장 ✦',
+    title: '경제\n마법사 학교',
+    sub: '아이가 처음 \'내 돈\'을 손에 쥐는 그 순간을 위한\n작은 마법학교',
+    cta: '시작하기',
+    accent: '#FBBF24',
+  },
+  {
+    kind: 'feature',
+    icon: <PictoRecord/>,
+    tag: 'STEP 1',
+    title: '오늘의 모험을\n마법서에 적어',
+    sub: '뭘 샀는지, 그때 마음이 어땠는지\n예쁜 스티커로 기록해.',
+    accent: '#22D3EE',
+  },
+  {
+    kind: 'feature',
+    icon: <PictoFriend/>,
+    tag: 'STEP 2',
+    title: '마음 친구를\n만나러 가',
+    sub: '내 마음 속 작은 몬스터가\n네 마법으로 멋진 친구가 돼!',
+    accent: '#EC4899',
+  },
+  {
+    kind: 'feature',
+    icon: <PictoGrow/>,
+    tag: 'STEP 3',
+    title: '마법 동전을\n모으며 성장해',
+    sub: '수업을 듣고 임무를 완수해\n진짜 경제 마법사가 되는 거야.',
+    accent: '#84CC16',
+  },
+  {
+    kind: 'name',
+    tag: '✦ 마지막 한 가지 ✦',
+    title: '이름을\n알려줄래?',
+    sub: '마법학교 입학 명부에\n네 이름을 적어둘게.',
+    cta: '입학식으로 →',
+    accent: '#F472B6',
+  },
+];
+
+// ─────────── Slide renderers ───────────
+function WelcomeSlide({ s }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '20px 24px' }}>
+      <div style={{ marginBottom: 8, animation: 'crestIn .6s cubic-bezier(.34,1.56,.64,1)' }}>
+        <Crest/>
+      </div>
+      <div style={{
+        display: 'inline-block', fontSize: 11, fontWeight: 700, color: s.accent,
+        letterSpacing: '0.15em', marginBottom: 10,
+      }}>{s.tag}</div>
+      <h1 style={{
+        margin: '0 0 14px', fontSize: 36, fontWeight: 900, lineHeight: 1.1,
+        background: 'linear-gradient(180deg, #FFF 0%, #FEF3C7 50%, #FBBF24 100%)',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        whiteSpace: 'pre-line', letterSpacing: '-0.02em',
+      }}>{s.title}</h1>
+      <p style={{
+        margin: 0, fontSize: 14, lineHeight: 1.6, color: 'rgba(254,243,199,0.75)',
+        whiteSpace: 'pre-line',
+      }}>{s.sub}</p>
+    </div>
+  );
+}
+
+function FeatureSlide({ s }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '40px 28px 20px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{
+        marginBottom: 18,
+        filter: `drop-shadow(0 0 18px ${s.accent}66)`,
+        animation: 'fadeUp .5s ease',
+      }}>{s.icon}</div>
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '4px 12px', borderRadius: 999,
+        background: `${s.accent}22`, border: `1px solid ${s.accent}66`,
+        fontSize: 10, fontWeight: 800, color: s.accent, letterSpacing: '0.15em', marginBottom: 14,
+      }}>{s.tag}</div>
+      <h2 style={{
+        margin: '0 0 12px', fontSize: 28, fontWeight: 900, lineHeight: 1.2,
+        color: '#fff', whiteSpace: 'pre-line', letterSpacing: '-0.01em',
+      }}>{s.title}</h2>
+      <p style={{
+        margin: 0, fontSize: 14, lineHeight: 1.6, color: 'rgba(254,243,199,0.75)',
+        whiteSpace: 'pre-line',
+      }}>{s.sub}</p>
+    </div>
+  );
+}
+
+function NameSlide({ s, name, setName }) {
+  const ref = useRef();
+  useEffect(() => { setTimeout(() => ref.current && ref.current.focus(), 250); }, []);
+  return (
+    <div style={{ textAlign: 'center', padding: '36px 28px 16px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* name tag illustration */}
+      <div style={{
+        position: 'relative', marginBottom: 20,
+        animation: 'fadeUp .5s ease',
+      }}>
+        <svg width="160" height="100" viewBox="0 0 160 100">
+          <defs>
+            <linearGradient id="ng" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="#FEF3C7"/><stop offset="1" stopColor="#FCD34D"/>
+            </linearGradient>
+          </defs>
+          <line x1="80" y1="0" x2="80" y2="22" stroke="#FBBF24" strokeWidth="1.5" strokeDasharray="3,3"/>
+          <circle cx="80" cy="22" r="4" fill="#FBBF24"/>
+          <rect x="14" y="28" width="132" height="60" rx="10" fill="url(#ng)" stroke="#92400E" strokeWidth="1.5"/>
+          <text x="80" y="48" fontSize="10" textAnchor="middle" fill="#92400E" fontWeight="700" letterSpacing="3">NAME</text>
+          <line x1="28" y1="68" x2="132" y2="68" stroke="#92400E" strokeWidth="1" strokeDasharray="2,2" opacity="0.5"/>
+          <text x="80" y="80" fontSize="14" textAnchor="middle" fill="#451a03" fontWeight="800">
+            {name || '____'}
+          </text>
+        </svg>
+      </div>
+      <div style={{
+        display: 'inline-block', fontSize: 10, fontWeight: 800, color: s.accent,
+        letterSpacing: '0.15em', marginBottom: 8,
+      }}>{s.tag}</div>
+      <h2 style={{
+        margin: '0 0 10px', fontSize: 28, fontWeight: 900, lineHeight: 1.2,
+        color: '#fff', whiteSpace: 'pre-line',
+      }}>{s.title}</h2>
+      <p style={{
+        margin: '0 0 18px', fontSize: 13, lineHeight: 1.6, color: 'rgba(254,243,199,0.7)',
+        whiteSpace: 'pre-line',
+      }}>{s.sub}</p>
+
+      <input
+        ref={ref}
+        value={name}
+        onChange={e => setName(e.target.value.slice(0, 8))}
+        placeholder="여기에 이름을 적어줘"
+        style={{
+          width: '100%', maxWidth: 280, height: 50, borderRadius: 14,
+          background: 'rgba(255,255,255,0.08)',
+          border: `1.5px solid ${name ? s.accent : 'rgba(255,255,255,0.18)'}`,
+          padding: '0 18px', textAlign: 'center',
+          color: '#fff', fontSize: 17, fontWeight: 700, fontFamily: 'inherit',
+          outline: 'none', transition: 'all .2s',
+          boxShadow: name ? `0 0 0 4px ${s.accent}22` : 'none',
+        }}
+      />
+      <div style={{
+        marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,0.4)',
+      }}>최대 8자까지 적을 수 있어</div>
+    </div>
+  );
+}
+
+// ─────────── Skip button ───────────
+function SkipButton({ onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      position: 'absolute', top: 16, right: 16, zIndex: 50,
+      background: 'transparent', border: 'none',
+      color: 'rgba(255,255,255,0.55)', fontSize: 13, fontWeight: 600,
+      cursor: 'pointer', fontFamily: 'inherit', padding: '6px 10px',
+    }}>건너뛰기</button>
+  );
+}
+
+// ─────────── Onboarding screen ───────────
+function Onboarding() {
+  const [idx, setIdx] = useState(0);
+  const [name, setName] = useState(() => {
+    try { return sessionStorage.getItem('userName') || ''; } catch (e) { return ''; }
+  });
+  const [exiting, setExiting] = useState(false);
+  const total = SLIDES.length;
+  const s = SLIDES[idx];
+  const isLast = idx === total - 1;
+  const isName = s.kind === 'name';
+  const canAdvance = !isName || name.trim().length > 0;
+
+  const goNext = () => {
+    if (isLast) {
+      try { sessionStorage.setItem('userName', name.trim() || '마법사'); } catch (e) {}
+      setExiting(true);
+      setTimeout(() => { window.location.href = 'screen1.html'; }, 650);
+      return;
+    }
+    setIdx(idx + 1);
+  };
+
+  const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
+  const skip = () => {
+    try { sessionStorage.setItem('userName', '마법사'); } catch (e) {}
+    window.location.href = 'screen1.html';
+  };
+
+  // Background tone shifts gently with slide
+  const bg = idx === 0
+    ? 'radial-gradient(120% 80% at 50% 30%, #4C1D95 0%, #312E81 45%, #0F0C29 100%)'
+    : `radial-gradient(120% 80% at 50% 0%, ${s.accent}25 0%, #312E81 40%, #1E1B4B 100%)`;
+
+  const ctaCopy = isName
+    ? (canAdvance ? '입학식으로 →' : '이름을 적어줘')
+    : (idx === 0 ? '시작하기' : '다음 →');
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: bg, transition: 'background .55s ease',
+      overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    }}>
+      <StarField/>
+      <SkipButton onClick={skip}/>
+
+      {/* progress dots top */}
+      <div style={{
+        position: 'absolute', top: 22, left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', gap: 6, zIndex: 50,
+      }}>
+        {SLIDES.map((_, i) => (
+          <div key={i} style={{
+            width: i === idx ? 22 : 6, height: 6, borderRadius: 3,
+            background: i <= idx ? '#FBBF24' : 'rgba(255,255,255,0.18)',
+            boxShadow: i === idx ? '0 0 6px #FBBF24' : 'none',
+            transition: 'all .35s',
+          }}/>
+        ))}
+      </div>
+
+      {/* Slide stage */}
+      <div style={{
+        position: 'relative', zIndex: 2, flex: 1,
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        paddingTop: 50,
+      }}>
+        <div key={idx} style={{
+          animation: exiting ? 'slideOut .55s forwards' : 'slideIn .45s cubic-bezier(.34,1.4,.64,1)',
+        }}>
+          {s.kind === 'welcome' && <WelcomeSlide s={s}/>}
+          {s.kind === 'feature' && <FeatureSlide s={s}/>}
+          {s.kind === 'name' && <NameSlide s={s} name={name} setName={setName}/>}
+        </div>
+      </div>
+
+      {/* CTA + back */}
+      <div style={{ position: 'relative', zIndex: 5, padding: '4px 24px 30px' }}>
+        <button
+          onClick={goNext}
+          disabled={!canAdvance || exiting}
+          style={{
+            width: '100%', height: 56, borderRadius: 18, border: 'none',
+            fontFamily: 'inherit', fontSize: 16, fontWeight: 800, color: '#fff',
+            cursor: canAdvance && !exiting ? 'pointer' : 'not-allowed',
+            background: canAdvance
+              ? `linear-gradient(135deg, #F472B6 0%, #EC4899 50%, #BE185D 100%)`
+              : 'rgba(255,255,255,0.08)',
+            color: canAdvance ? '#fff' : 'rgba(255,255,255,0.4)',
+            boxShadow: canAdvance
+              ? '0 10px 28px rgba(236,72,153,0.55), inset 0 1px 0 rgba(255,255,255,0.4)'
+              : 'inset 0 0 0 1px rgba(255,255,255,0.08)',
+            transition: 'all .2s',
+            opacity: exiting ? 0.6 : 1,
+          }}
+        >{ctaCopy}</button>
+
+        {/* back link */}
+        <div style={{
+          marginTop: 14, textAlign: 'center', height: 16,
+        }}>
+          {idx > 0 && (
+            <button onClick={goPrev} style={{
+              background: 'transparent', border: 'none',
+              color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}>← 이전</button>
+          )}
+        </div>
+      </div>
+
+      {/* Exit flash overlay */}
+      {exiting && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 100,
+          background: 'radial-gradient(circle at 50% 50%, #FBBF24 0%, #FCD34D 30%, #BE185D 100%)',
+          animation: 'flashIn .65s ease-out forwards',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            color: '#FFF', fontSize: 22, fontWeight: 900,
+            textShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            animation: 'pop .5s cubic-bezier(.34,1.56,.64,1)',
+            textAlign: 'center', lineHeight: 1.4,
+          }}>
+            ✦ 입학식이 시작됩니다 ✦<br/>
+            <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>
+              어서 와, {name.trim() || '마법사'}!
+            </span>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideOut { to { opacity: 0; transform: scale(0.95); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes wobble { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+        @keyframes friendFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes twinkle { 0%,100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+        @keyframes crestIn {
+          0% { opacity: 0; transform: scale(0.7) rotate(-12deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0); }
+        }
+        @keyframes pop { 0%{transform:scale(0);} 70%{transform:scale(1.15);} 100%{transform:scale(1);} }
+        @keyframes flashIn {
+          0% { opacity: 0; clip-path: circle(0% at 50% 100%); }
+          100% { opacity: 1; clip-path: circle(150% at 50% 100%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <IOSDevice width={390} height={780} dark={true}><Onboarding/></IOSDevice>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>

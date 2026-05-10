@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>경제 마법사 학교 — 화면 5</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: #0b0820;
+    font-family: 'Pretendard', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #fff;
+    overflow: hidden;
+    height: 100%;
+  }
+  #root { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef } = React;
+
+// Lesson data — Day 7
+const LESSON = {
+  day: 7,
+  title: '용돈은 어디서 오는 걸까?',
+  subtitle: '경제 마법 수업 · 5분',
+  reward: 10,
+  cards: [
+    {
+      kind: 'cover',
+      icon: '💰',
+      tag: 'CHAPTER 2 · 돈의 비밀',
+      title: '용돈은 어디서\n오는 걸까?',
+      footer: '오늘의 마법서 한 페이지를 펼쳐볼까?',
+    },
+    {
+      kind: 'concept',
+      icon: '🌱',
+      tag: 'STEP 1 · 알아보기',
+      title: '돈은 어떻게 자라날까?',
+      body: '엄마, 아빠는 회사에서 일을 하고 그 시간만큼 \'월급\'을 받아.',
+      hint: '용돈은 그 월급에서 너에게 나누어 주는 작은 마법이야 ✨',
+      visual: 'flow',
+    },
+    {
+      kind: 'concept',
+      icon: '🤝',
+      tag: 'STEP 2 · 더 알아보기',
+      title: '"일"과 "돈"은 친구야',
+      body: '내가 좋아하는 일을 잘하면 → 다른 사람이 고마워하고 → 돈을 줘.',
+      hint: '집안일을 도우면 받는 보너스 동전도 같은 원리야!',
+      visual: 'pair',
+    },
+    {
+      kind: 'quiz',
+      icon: '🧠',
+      tag: 'STEP 3 · 풀어보기',
+      question: '용돈을 받았을 때 가장 좋은 자세는?',
+      options: [
+        { id: 'a', text: '"고마워요"라고 인사하기', correct: true },
+        { id: 'b', text: '바로 다 써버리기',         correct: false },
+        { id: 'c', text: '돈에 이름을 적기',         correct: false },
+      ],
+      explain: '용돈은 부모님의 시간과 마음이 담긴 마법 동전이야.\n고마워하는 마음이 첫 번째 마법 능력!',
+    },
+    {
+      kind: 'reward',
+      icon: '✨',
+      tag: '수업 완료!',
+      title: '오늘의 마법을\n익혔어!',
+      reward: 10,
+      newBadge: '돈의 시작 ⭐',
+    },
+  ],
+};
+
+// ─────────── Star particles ───────────
+function StarField() {
+  const ref = useRef();
+  useEffect(() => {
+    const c = ref.current; const ctx = c.getContext('2d');
+    const w = c.width = c.offsetWidth * devicePixelRatio;
+    const h = c.height = c.offsetHeight * devicePixelRatio;
+    const stars = Array.from({ length: 45 }, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: (Math.random() * 1.2 + 0.4) * devicePixelRatio,
+      vy: -(Math.random() * 0.2 + 0.04) * devicePixelRatio,
+      a: Math.random() * 0.55 + 0.2, tw: Math.random() * Math.PI * 2,
+    }));
+    let raf;
+    const tick = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of stars) {
+        s.y += s.vy; s.tw += 0.04;
+        if (s.y < -5) { s.y = h + 5; s.x = Math.random() * w; }
+        const a = s.a * (0.6 + 0.4 * Math.sin(s.tw));
+        ctx.fillStyle = `rgba(255, 240, 200, ${a})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}/>;
+}
+
+// ─────────── Tiny illustrations for concept cards ───────────
+function FlowIllustration() {
+  return (
+    <svg viewBox="0 0 240 110" style={{ width: '100%', maxWidth: 280 }}>
+      <defs>
+        <linearGradient id="goldG" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#FCD34D"/><stop offset="1" stopColor="#B45309"/>
+        </linearGradient>
+      </defs>
+      {/* parent */}
+      <g>
+        <circle cx="36" cy="55" r="20" fill="rgba(255,255,255,0.1)" stroke="#22D3EE" strokeWidth="1.5"/>
+        <text x="36" y="62" fontSize="22" textAnchor="middle">👨‍💼</text>
+        <text x="36" y="92" fontSize="9" textAnchor="middle" fill="#FEF3C7" fontWeight="700">부모님</text>
+        <text x="36" y="103" fontSize="8" textAnchor="middle" fill="rgba(255,255,255,0.5)">일</text>
+      </g>
+      {/* arrow 1 */}
+      <g>
+        <line x1="62" y1="55" x2="100" y2="55" stroke="#FBBF24" strokeWidth="1.5" strokeDasharray="3,3"/>
+        <polygon points="100,55 95,52 95,58" fill="#FBBF24"/>
+      </g>
+      {/* coins */}
+      <g>
+        <circle cx="120" cy="55" r="22" fill="url(#goldG)" stroke="#92400E" strokeWidth="1.5"/>
+        <text x="120" y="62" fontSize="18" textAnchor="middle">💰</text>
+        <text x="120" y="92" fontSize="9" textAnchor="middle" fill="#FBBF24" fontWeight="700">월급</text>
+      </g>
+      {/* arrow 2 */}
+      <g>
+        <line x1="146" y1="55" x2="184" y2="55" stroke="#FBBF24" strokeWidth="1.5" strokeDasharray="3,3"/>
+        <polygon points="184,55 179,52 179,58" fill="#FBBF24"/>
+      </g>
+      {/* kid */}
+      <g>
+        <circle cx="204" cy="55" r="20" fill="rgba(255,255,255,0.1)" stroke="#F472B6" strokeWidth="1.5"/>
+        <text x="204" y="62" fontSize="22" textAnchor="middle">🧒</text>
+        <text x="204" y="92" fontSize="9" textAnchor="middle" fill="#FEF3C7" fontWeight="700">너</text>
+        <text x="204" y="103" fontSize="8" textAnchor="middle" fill="rgba(255,255,255,0.5)">용돈</text>
+      </g>
+      {/* sparkles */}
+      <text x="80" y="36" fontSize="9" fill="#FBBF24">✦</text>
+      <text x="160" y="36" fontSize="9" fill="#22D3EE">✦</text>
+    </svg>
+  );
+}
+
+function PairIllustration() {
+  return (
+    <svg viewBox="0 0 240 110" style={{ width: '100%', maxWidth: 280 }}>
+      <defs>
+        <linearGradient id="pg" x1="0" x2="1"><stop offset="0" stopColor="#22D3EE"/><stop offset="1" stopColor="#FBBF24"/></linearGradient>
+      </defs>
+      {/* work */}
+      <g>
+        <rect x="20" y="34" width="74" height="44" rx="12" fill="rgba(34,211,238,0.1)" stroke="#22D3EE" strokeWidth="1.5"/>
+        <text x="57" y="62" fontSize="22" textAnchor="middle">🛠️</text>
+        <text x="57" y="96" fontSize="10" fontWeight="800" textAnchor="middle" fill="#22D3EE">일</text>
+      </g>
+      {/* heart connector */}
+      <g>
+        <text x="120" y="62" fontSize="20" textAnchor="middle">❤️</text>
+        <line x1="98" y1="56" x2="108" y2="56" stroke="url(#pg)" strokeWidth="2"/>
+        <line x1="132" y1="56" x2="142" y2="56" stroke="url(#pg)" strokeWidth="2"/>
+      </g>
+      {/* money */}
+      <g>
+        <rect x="146" y="34" width="74" height="44" rx="12" fill="rgba(251,191,36,0.1)" stroke="#FBBF24" strokeWidth="1.5"/>
+        <text x="183" y="62" fontSize="22" textAnchor="middle">💰</text>
+        <text x="183" y="96" fontSize="10" fontWeight="800" textAnchor="middle" fill="#FBBF24">돈</text>
+      </g>
+    </svg>
+  );
+}
+
+// ─────────── Card renderer ───────────
+function LessonCard({ card, idx, total, onAnswered, answer, showResult }) {
+  if (card.kind === 'cover') {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px 24px' }}>
+        <div style={{
+          fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.1em', marginBottom: 8,
+        }}>{card.tag}</div>
+        <div style={{ fontSize: 64, marginBottom: 14, animation: 'cardIcon 2.4s ease-in-out infinite' }}>{card.icon}</div>
+        <h2 style={{
+          margin: 0, fontSize: 28, fontWeight: 900, lineHeight: 1.25,
+          background: 'linear-gradient(180deg, #FEF3C7 0%, #FBBF24 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          whiteSpace: 'pre-line',
+        }}>{card.title}</h2>
+        <p style={{
+          margin: '18px 0 0', fontSize: 13, color: 'rgba(254,243,199,0.7)', fontStyle: 'italic',
+          lineHeight: 1.5,
+        }}>{card.footer}</p>
+        <div style={{
+          marginTop: 24, display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '6px 14px', borderRadius: 999, background: 'rgba(251,191,36,0.12)',
+          border: '1px solid rgba(251,191,36,0.4)', fontSize: 11, fontWeight: 700, color: '#FBBF24',
+        }}>
+          🪙 완료 시 +{LESSON.reward} 동전
+        </div>
+      </div>
+    );
+  }
+
+  if (card.kind === 'concept') {
+    return (
+      <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#22D3EE', letterSpacing: '0.1em' }}>{card.tag}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: 'linear-gradient(135deg, rgba(34,211,238,0.2), rgba(34,211,238,0.05))',
+            border: '1px solid rgba(34,211,238,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+          }}>{card.icon}</div>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#fff' }}>{card.title}</h3>
+        </div>
+
+        {/* visual */}
+        <div style={{
+          flex: '0 0 auto', margin: '16px 0', padding: '14px 6px',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px dashed rgba(255,255,255,0.15)',
+          borderRadius: 14, display: 'flex', justifyContent: 'center',
+        }}>
+          {card.visual === 'flow' ? <FlowIllustration/> : <PairIllustration/>}
+        </div>
+
+        <p style={{
+          margin: '6px 0 12px', fontSize: 15, lineHeight: 1.55, color: '#fff', fontWeight: 600,
+        }}>{card.body}</p>
+
+        <div style={{
+          marginTop: 'auto',
+          padding: '12px 14px', borderRadius: 12,
+          background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(236,72,153,0.1))',
+          border: '1px solid rgba(251,191,36,0.4)',
+          fontSize: 13, fontWeight: 700, color: '#FEF3C7', lineHeight: 1.5,
+        }}>
+          💡 {card.hint}
+        </div>
+      </div>
+    );
+  }
+
+  if (card.kind === 'quiz') {
+    return (
+      <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#F472B6', letterSpacing: '0.1em' }}>{card.tag}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: 'linear-gradient(135deg, rgba(244,114,182,0.25), rgba(190,24,93,0.1))',
+            border: '1px solid rgba(244,114,182,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+          }}>{card.icon}</div>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900, color: '#fff', lineHeight: 1.3 }}>
+            {card.question}
+          </h3>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+          {card.options.map(opt => {
+            const picked = answer === opt.id;
+            const reveal = showResult;
+            const showCorrect = reveal && opt.correct;
+            const showWrong = reveal && picked && !opt.correct;
+            return (
+              <button key={opt.id}
+                onClick={() => onAnswered(opt.id)}
+                disabled={reveal}
+                style={{
+                  textAlign: 'left',
+                  background: showCorrect ? 'rgba(132,204,22,0.18)' : showWrong ? 'rgba(239,68,68,0.18)' :
+                              picked ? 'rgba(244,114,182,0.18)' : 'rgba(255,255,255,0.06)',
+                  border: `1.5px solid ${
+                    showCorrect ? '#84CC16' : showWrong ? '#EF4444' : picked ? '#F472B6' : 'rgba(255,255,255,0.15)'
+                  }`,
+                  borderRadius: 14, padding: '14px 16px',
+                  color: '#fff', fontSize: 14, fontWeight: 700,
+                  cursor: reveal ? 'default' : 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                  transition: 'all .2s',
+                }}>
+                <span>{opt.text}</span>
+                {showCorrect && <span style={{ color: '#84CC16', fontSize: 16 }}>✓</span>}
+                {showWrong && <span style={{ color: '#EF4444', fontSize: 16 }}>✗</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {showResult && (
+          <div style={{
+            marginTop: 'auto', padding: '12px 14px', borderRadius: 12,
+            background: 'rgba(132,204,22,0.12)', border: '1px solid rgba(132,204,22,0.4)',
+            fontSize: 13, fontWeight: 600, color: '#D9F99D', lineHeight: 1.55,
+            whiteSpace: 'pre-line', animation: 'fadeUp .3s ease',
+          }}>
+            ✦ {card.explain}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (card.kind === 'reward') {
+    return (
+      <div style={{ textAlign: 'center', padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+        <div style={{
+          margin: '0 auto 18px',
+          width: 110, height: 110, borderRadius: '50%',
+          background: 'radial-gradient(circle, #FEF3C7 0%, #FBBF24 50%, #92400E 100%)',
+          border: '3px solid #FBBF24',
+          boxShadow: '0 0 40px #FBBF24, inset 0 -4px 8px rgba(120,53,15,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'pulseBig 1.4s ease-out',
+        }}>
+          <span style={{ fontSize: 56, animation: 'pop .6s' }}>{card.icon}</span>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.15em', marginBottom: 6 }}>
+          ✦ {card.tag} ✦
+        </div>
+        <h2 style={{
+          margin: '4px 0 14px', fontSize: 26, fontWeight: 900, lineHeight: 1.25,
+          background: 'linear-gradient(180deg, #fff 0%, #FBBF24 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          whiteSpace: 'pre-line',
+        }}>{card.title}</h2>
+        <div style={{
+          display: 'inline-flex', alignSelf: 'center', alignItems: 'center', gap: 6,
+          padding: '8px 16px', borderRadius: 999,
+          background: 'linear-gradient(135deg, #FCD34D, #B45309)',
+          color: '#1E1B4B', fontSize: 14, fontWeight: 900,
+          boxShadow: '0 6px 18px rgba(251,191,36,0.45)',
+        }}>
+          <span style={{ fontSize: 18 }}>🪙</span> +{card.reward} 마법 동전
+        </div>
+        {/* badge unlocked */}
+        <div style={{
+          marginTop: 20, padding: '10px 14px', borderRadius: 12,
+          background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(251,191,36,0.4)',
+          fontSize: 12, color: '#FEF3C7', fontWeight: 700,
+        }}>
+          📛 새 배움 카드 획득: <span style={{ color: '#FBBF24' }}>{card.newBadge}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+// ─────────── Screen 5 ───────────
+function Screen5() {
+  const [idx, setIdx] = useState(0);
+  const [quizAnswer, setQuizAnswer] = useState(null);
+  const [quizRevealed, setQuizRevealed] = useState(false);
+  const total = LESSON.cards.length;
+  const card = LESSON.cards[idx];
+
+  const isQuiz = card.kind === 'quiz';
+  const canAdvance = !isQuiz || quizRevealed;
+
+  const onAnswered = (id) => {
+    setQuizAnswer(id);
+    setTimeout(() => setQuizRevealed(true), 250);
+  };
+
+  const next = () => {
+    if (idx === total - 1) { window.location.href = 'screen2.html'; return; }
+    if (idx < total - 1) setIdx(idx + 1);
+    else { setIdx(0); setQuizAnswer(null); setQuizRevealed(false); }
+  };
+  const prev = () => { if (idx > 0) setIdx(idx - 1); };
+
+  // reset quiz state when leaving quiz
+  useEffect(() => {
+    if (card.kind !== 'quiz') { setQuizAnswer(null); setQuizRevealed(false); }
+  }, [idx]);
+
+  const ctaCopy = card.kind === 'reward' ? '메인으로 돌아가기 ↩'
+                : card.kind === 'quiz' && !quizRevealed ? '답을 골라봐'
+                : idx === total - 2 ? '수업 마무리 →'
+                : '다음 →';
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: 'radial-gradient(120% 80% at 50% 0%, #4C1D95 0%, #312E81 45%, #1E1B4B 100%)',
+      overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    }}>
+      <StarField/>
+
+      {/* top bar */}
+      <div style={{
+        position: 'relative', zIndex: 5,
+        paddingTop: 60, padding: '60px 16px 8px',
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <button onClick={prev} disabled={idx === 0} style={{
+          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+          color: '#fff', borderRadius: 999, width: 36, height: 36, fontSize: 16,
+          opacity: idx === 0 ? 0.3 : 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: idx === 0 ? 'default' : 'pointer', fontFamily: 'inherit',
+        }}>‹</button>
+
+        {/* progress bar with dots */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#FBBF24', letterSpacing: '0.08em' }}>
+              📚 DAY {LESSON.day} · {LESSON.subtitle}
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+              {idx + 1} / {total}
+            </div>
+          </div>
+          <div style={{
+            height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', overflow: 'hidden',
+          }}>
+            <div style={{
+              width: `${((idx + 1) / total) * 100}%`, height: '100%',
+              background: 'linear-gradient(90deg, #FBBF24, #F472B6)',
+              borderRadius: 3, transition: 'width .35s ease',
+              boxShadow: '0 0 8px #FBBF24',
+            }}/>
+          </div>
+        </div>
+
+        <button onClick={() => { window.location.href = 'screen2.html'; }} style={{
+          background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.55)',
+          fontSize: 18, cursor: 'pointer', width: 36, height: 36, fontFamily: 'inherit',
+        }}>✕</button>
+      </div>
+
+      {/* card stack area */}
+      <div style={{
+        position: 'relative', zIndex: 2, flex: 1,
+        padding: '14px 18px 14px',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* ghost cards behind */}
+        <div style={{ position: 'relative', flex: 1, perspective: 1200 }}>
+          {idx + 1 < total && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'rgba(255,255,255,0.04)', borderRadius: 22,
+              border: '1px solid rgba(251,191,36,0.18)',
+              transform: 'translateY(14px) scale(0.95)',
+              opacity: 0.6,
+            }}/>
+          )}
+          {idx + 2 < total && (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'rgba(255,255,255,0.025)', borderRadius: 22,
+              border: '1px solid rgba(251,191,36,0.1)',
+              transform: 'translateY(28px) scale(0.9)',
+              opacity: 0.4,
+            }}/>
+          )}
+
+          {/* main card */}
+          <div key={idx} style={{
+            position: 'relative', height: '100%',
+            background: 'rgba(255,255,255,0.07)',
+            backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+            border: '1px solid rgba(251,191,36,0.5)',
+            borderRadius: 22,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 12px 30px rgba(0,0,0,0.35)',
+            overflow: 'hidden',
+            animation: 'cardIn .35s cubic-bezier(.34,1.4,.64,1)',
+            display: 'flex', flexDirection: 'column',
+          }}>
+            <LessonCard card={card} idx={idx} total={total}
+              answer={quizAnswer} showResult={quizRevealed} onAnswered={onAnswered}/>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ position: 'relative', zIndex: 5, padding: '4px 20px 28px' }}>
+        <button
+          onClick={next}
+          disabled={!canAdvance}
+          style={{
+            width: '100%', height: 54, borderRadius: 16, border: 'none',
+            fontFamily: 'inherit', fontSize: 16, fontWeight: 800, color: '#fff',
+            cursor: canAdvance ? 'pointer' : 'not-allowed',
+            background: canAdvance
+              ? (card.kind === 'reward'
+                  ? 'linear-gradient(135deg, #FCD34D 0%, #D97706 100%)'
+                  : 'linear-gradient(135deg, #F472B6 0%, #EC4899 50%, #BE185D 100%)')
+              : 'rgba(255,255,255,0.08)',
+            color: canAdvance ? (card.kind === 'reward' ? '#1E1B4B' : '#fff') : 'rgba(255,255,255,0.4)',
+            boxShadow: canAdvance
+              ? (card.kind === 'reward'
+                  ? '0 10px 28px rgba(251,191,36,0.55)'
+                  : '0 10px 28px rgba(236,72,153,0.55)')
+              : 'inset 0 0 0 1px rgba(255,255,255,0.08)',
+            transition: 'all .2s',
+          }}
+        >{ctaCopy}</button>
+      </div>
+
+      <style>{`
+        @keyframes cardIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: none; } }
+        @keyframes cardIcon { 0%,100%{transform:translateY(0) rotate(-3deg);} 50%{transform:translateY(-4px) rotate(3deg);} }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseBig {
+          0% { transform: scale(0.4); opacity: 0; }
+          50% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pop { 0%{transform:scale(0);} 70%{transform:scale(1.2);} 100%{transform:scale(1);} }
+      `}</style>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <IOSDevice width={390} height={780} dark={true}><Screen5/></IOSDevice>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
