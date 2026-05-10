@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Pretendard Variable', Pretendard, 'Nanum Gothic', system-ui, sans-serif;
+  background: #1e1b4b;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Reduced motion 정책 — UI-SPEC Accessibility 항목 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}
