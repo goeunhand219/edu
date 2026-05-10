@@ -78,17 +78,41 @@
 
 ## Traceability
 
-Roadmap 생성 후 채워집니다.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (to be populated by roadmap) | | |
+| DSGN-01 | Phase 1 | Pending |
+| DSGN-02 | Phase 1 | Pending |
+| DSGN-03 | Phase 1 | Pending |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Pending |
+| ONBO-01 | Phase 1 | Pending |
+| ONBO-02 | Phase 1 | Pending |
+| ONBO-03 | Phase 1 | Pending |
+| DASH-01 | Phase 2 | Pending |
+| DASH-02 | Phase 2 | Pending |
+| DASH-03 | Phase 2 | Pending |
+| DASH-04 | Phase 2 | Pending |
+| DASH-05 | Phase 2 | Pending |
+| REC-01 | Phase 3 | Pending |
+| REC-02 | Phase 3 | Pending |
+| REC-03 | Phase 3 | Pending |
+| REC-04 | Phase 3 | Pending |
+| REC-05 | Phase 3 | Pending |
+| PLAT-03 | Phase 3 | Pending |
+| PLAT-04 | Phase 3 | Pending |
+| FRND-01 | Phase 4 (Stretch) | Pending |
+| FRND-02 | Phase 4 (Stretch) | Pending |
+| FRND-03 | Phase 4 (Stretch) | Pending |
+| LESN-01 | Phase 4 (Stretch) | Pending |
+| LESN-02 | Phase 4 (Stretch) | Pending |
+| PRNT-01 | Phase 4 (Stretch) | Pending |
+| PRNT-02 | Phase 4 (Stretch) | Pending |
 
 **Coverage:**
 - v1 requirements: 19 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19/19 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-10*
-*Last updated: 2026-05-10 after initial definition*
+*Last updated: 2026-05-10 — Traceability populated after roadmap creation*
