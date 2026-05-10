@@ -5,7 +5,7 @@ milestone_name: milestone
 status: planning
 stopped_at: Phase 1 UI-SPEC approved
 last_updated: "2026-05-10T02:46:54.080Z"
-last_activity: 2026-05-10 — Completed quick task 260510-ghu: Phase 1 화면 1 온보딩 구현
+last_activity: 2026-05-10 — Completed quick task 260510-gwt: Phase 2 화면 2 대시보드 구현
 progress:
   percent: 0
 ---
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Phase: 1 of 4 (Foundation + Onboarding)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-05-10 — Completed quick task 260510-ghu: Phase 1 화면 1 온보딩 구현
+Last activity: 2026-05-10 — Completed quick task 260510-gwt: Phase 2 화면 2 대시보드 구현
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -74,6 +74,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260510-ghu | Phase 1 화면 1 온보딩 구현 (Vite + React + Tailwind 셋업 + 5속성 동전 선택) | 2026-05-10 | 3ec0bfe | [260510-ghu-phase-1-1-vite-react-tailwind-5](./quick/260510-ghu-phase-1-1-vite-react-tailwind-5/) |
+| 260510-gwt | Phase 2 화면 2 대시보드 구현 (캐릭터 카드 · 수업/임무 카드 · CTA · 부모 링크) | 2026-05-10 | cd27ef8 | [260510-gwt-phase-2-2](./quick/260510-gwt-phase-2-2/) |
 
 ## Deferred Items
 
